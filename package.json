@@ -1,0 +1,56 @@
+{
+  "name": "dsh-message-revert",
+  "description": "DSH message revert/rollback plugin: a revert button on every sent message; on confirm it restores the message text and attachments to the composer, rolls the session back (fork at the last completed turn, or a fresh blank session for a first message) and restores workspace files to their captured before-content. Host engine + browser UI, no core changes.",
+  "version": "1.0.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "revert",
+    "rollback",
+    "undo",
+    "session",
+    "files"
+  ],
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-conversation",
+        "@deepseek-ai/dsh-client-ui-slots"
+      ],
+      "platform": "web"
+    }
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js"
+  ],
+  "scripts": {
+    "bundle": "echo noop: plain JS host+client plugin; edit lib/ directly"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-client-locale": "^0.1.1-rc.2",
+    "@deepseek-ai/dsh-client-ui-conversation": "^0.1.1-rc.2",
+    "@deepseek-ai/dsh-client-ui-slots": "^0.1.1-rc.2"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/imcaibaicai/dsh-message-revert.git"
+  }
+}
