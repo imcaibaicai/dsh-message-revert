@@ -56,6 +56,24 @@ Remove the insert row from `cordis.patch.yml` plus the package directory, then r
 - Relies on official internal DOM markers (`[data-chat-flow-kind=user]`, `[data-chat-flow-key]`, `[data-composer-input]`) and service faces (`sessions.fork` / `conversation.input.shell` / `workspaces.archiveSession`); after a DSH upgrade, check these contracts first if something breaks.
 - Tested on DeepSeek Harness `0.1.5-rc.1` (web profile); `sessions.create({ workspaceId })` is the correct way to birth a blank session on 0.1.5, and newer-build verbs (`connectWorkspace` / `startSession`) are preferred when present.
 
+## Changelog
+
+### 1.0.3 (2026-10-06)
+
+- **Fixed "cannot revert a follow-up message inside a turn" / "reverting silently drops a whole turn"**: the previous cut algorithm only forked at `turn/end`, so reverting a message typed *mid-turn* (a steering correction) rolled the session back to the previous turn, dropping everything since — which then tripped the safety gate ("new session did not fully carry the earlier history") and blocked archiving the original. The cut point is now chosen from the session's real topology:
+  - **Turn-opening message** (the first prompt of its turn) → cut at the **end of the previous completed turn**, discarding the whole current turn;
+  - **Mid-turn follow-up / steering message** → cut at the **latest completed `step/end` before that message**, removing only that message and what followed it — everything earlier in the same turn is preserved;
+  - **First message of the session** → a reset to a blank session is still only allowed when it is provably the first exchange; everything else forks, and any ambiguity is refused rather than guessed.
+- **Fixed the archive block**: with a precise cut the forked child keeps every user message that preceded the reverted one. Child-log reads also gained **cache bypass** so the retry loop can no longer see an empty 3-second cache and misjudge; that also removes the "safety check failed" toast that vanished instantly because the UI had already switched to the new session.
+- **Safer ordering**: confirming a revert now calls `stopIfRunning()` before restoring files, so a restore can no longer race an agent that is still writing.
+- **More robust target resolution**: when `data-chat-flow-key` has not rendered yet (or is missing), the click handler re-reads the DOM live and falls back to **matching the displayed message text**, instead of degrading to "the last message".
+- The host's `readUserMessages` also returns `stepEnds` now, supplying anchors for fine-grained in-turn cuts.
+
+### 1.0.2 (previously unreleased, folded into this release)
+
+- **Image and file attachments are restored to the composer verbatim** (the host gained a direct attachment endpoint `/dsh-revert/attachment` serving binary streams; `createDrafts` + `addAttachments` + `rebindDraftFiles` put them back in the input).
+- Declares DSH `0.2.0` peer compatibility and adds `@deepseek-ai/dsh-client-ui-workspace` to the inject list.
+
 ## License
 
 MIT

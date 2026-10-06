@@ -56,6 +56,24 @@ dsh plugin --profile web add -w dsh-message-revert
 - 依赖官方内部 DOM 标记（`[data-chat-flow-kind=user]`、`[data-chat-flow-key]`、`[data-composer-input]`）与服务面（`sessions.fork` / `conversation.input.shell` / `workspaces.archiveSession`）；DSH 升级后若失效，先核对这些契约。
 - 实测于 DeepSeek Harness `0.1.5-rc.1`（web profile）；`sessions.create({ workspaceId })` 是 0.1.5 建空白会话的正解，新版动词（`connectWorkspace` / `startSession`）存在时也会优先使用。
 
+## 更新记录
+
+### 1.0.3（2026-10-06）
+
+- **修复「同一回合内的纠错消息撤不回 / 撤回即丢一整段」**：之前的切点算法只在 `turn/end` 上分叉，撤回第 2 回合中途发送的跟进消息时会把整段回合丢回上一个回合，触发"安全检查未通过"并阻止归档。现在改为**按会话真实拓扑选切点**：
+  - **回合起始消息**（该消息是所在回合的第一条提问）→ 切到**上一个已完成回合的结尾**，整段撤回当前回合；
+  - **回合中途跟进 / steer 消息** → 切到**该消息前最近一个已完成 `step/end`**，只剔除这条消息及其后的操作，同回合早于它的内容和成果全部保留；
+  - **会话首条消息** → 依然只有在能证明是首次往返时才允许重置到空白会话，其余一律 fork；任何歧义直接报错，绝不猜。
+- **修复归档阻塞**：切点精确后，fork 出的子会话完整保留早于被撤回消息的全部用户消息；同时给子会话日志读取加了**缓存穿透**，避免轮询读到 3 秒内的空缓存而误判，也修掉了"安全检查未通过"的 toast 一闪而过（页面已跳转）导致看不到原因的问题。
+- **执行时序更稳**：确认撤回时先 `stopIfRunning()` 停止仍在运行的回合，再还原文件，避免还原写盘与 Agent 写盘竞争。
+- **目标消息定位更稳**：`data-chat-flow-key` 渲染延迟或缺失时，改用在 DOM 上实时重读的键 + **文本兜底匹配**，不再退化到"最后一条消息"。
+- 宿主 `readUserMessages` 额外返回 `stepEnds`，为回合内精细切点提供锚点。
+
+### 1.0.2（此前未发布，随本次一并合入）
+
+- 撤回后**图片 / 文件附件原样回填**（宿主新增附件直读端点 `/dsh-revert/attachment`，支持二进制流；`createDrafts` + `addAttachments` + `rebindDraftFiles` 挂回输入框）。
+- 声明 DSH `0.2.0` peer 兼容，注入列表补上 `@deepseek-ai/dsh-client-ui-workspace`。
+
 ## License
 
 MIT
