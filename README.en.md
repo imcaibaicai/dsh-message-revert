@@ -58,6 +58,13 @@ Remove the insert row from `cordis.patch.yml` plus the package directory, then r
 
 ## Changelog
 
+### 1.0.5 (2026-10-10)
+
+- **Comprehensively resolved "right sidebar (files tree, terminal, preview) collapsing upon rollback"**:
+  - **Accurate detection and forced expansion flag**: Detects whether the right sidebar is currently open using `button[data-sidebar-right-expand]` (which is strictly rendered only when rightbar is collapsed) and DOM width; forces `layout.expanded = true` when migrating layout to the new session so React `RightbarSeat` does not un-expand the panel on mount.
+  - **DOM-level watcher guard loop**: If unmounting cleanup calls `layout.closeRightbar()`, an active watcher loop (15 attempts across ~1s) immediately simulates clicking the expand button and attempts reflection calls on `sidebarRight`, guaranteeing the right sidebar stays consistently open.
+  - **Left sidebar equal protection**: Guarding left sidebar against accidental collapse under any viewport width.
+
 ### 1.0.4 (2026-10-10)
 
 - **Fixed "sidebar automatically closes upon rollback"**: ensure rollback operations strictly revert conversation and workspace files without altering the UI layout:
