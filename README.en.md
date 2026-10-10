@@ -58,21 +58,22 @@ Remove the insert row from `cordis.patch.yml` plus the package directory, then r
 
 ## Changelog
 
+### 1.0.4 (2026-10-10)
+
+- **Fixed "sidebar automatically closes upon rollback"**: ensure rollback operations strictly revert conversation and workspace files without altering the UI layout:
+  - **Seamless inheritance of right sidebar (files/terminal/preview tabs) state**: DSH isolates right sidebar docking layout per session in `localStorage`. Rollback creating a new session caused the right sidebar to start empty and collapsed. The layout, open tabs, active pane, and expanded state are now deep-cloned to the target session upon fork/reset.
+  - **Left sidebar expansion preservation**: captures the open/collapsed state of the left sidebar before rollback, restoring it if session transition or narrow-screen responsiveness collapsed it.
+
 ### 1.0.3 (2026-10-06)
 
-- **Fixed "cannot revert a follow-up message inside a turn" / "reverting silently drops a whole turn"**: the previous cut algorithm only forked at `turn/end`, so reverting a message typed *mid-turn* (a steering correction) rolled the session back to the previous turn, dropping everything since — which then tripped the safety gate ("new session did not fully carry the earlier history") and blocked archiving the original. The cut point is now chosen from the session's real topology:
-  - **Turn-opening message** (the first prompt of its turn) → cut at the **end of the previous completed turn**, discarding the whole current turn;
-  - **Mid-turn follow-up / steering message** → cut at the **latest completed `step/end` before that message**, removing only that message and what followed it — everything earlier in the same turn is preserved;
-  - **First message of the session** → a reset to a blank session is still only allowed when it is provably the first exchange; everything else forks, and any ambiguity is refused rather than guessed.
-- **Fixed the archive block**: with a precise cut the forked child keeps every user message that preceded the reverted one. Child-log reads also gained **cache bypass** so the retry loop can no longer see an empty 3-second cache and misjudge; that also removes the "safety check failed" toast that vanished instantly because the UI had already switched to the new session.
-- **Safer ordering**: confirming a revert now calls `stopIfRunning()` before restoring files, so a restore can no longer race an agent that is still writing.
-- **More robust target resolution**: when `data-chat-flow-key` has not rendered yet (or is missing), the click handler re-reads the DOM live and falls back to **matching the displayed message text**, instead of degrading to "the last message".
-- The host's `readUserMessages` also returns `stepEnds` now, supplying anchors for fine-grained in-turn cuts.
+- **Fixed "cannot revert a follow-up message inside a turn" / "reverting silently drops a whole turn"**: topology-aware cut selection (turn-opening cuts at previous turn end; mid-turn steering cuts at previous step end).
+- **Fixed archive block & cache bypass**: ensures all earlier messages are preserved in child log reads.
+- **Safer execution ordering**: stop turn before file restoration to avoid I/O races.
 
-### 1.0.2 (previously unreleased, folded into this release)
+### 1.0.2 (2026-10-02)
 
-- **Image and file attachments are restored to the composer verbatim** (the host gained a direct attachment endpoint `/dsh-revert/attachment` serving binary streams; `createDrafts` + `addAttachments` + `rebindDraftFiles` put them back in the input).
-- Declares DSH `0.2.0` peer compatibility and adds `@deepseek-ai/dsh-client-ui-workspace` to the inject list.
+- Restores image and file attachments to the composer via `/dsh-revert/attachment`.
+- Declares DSH 0.2.0 compatibility.
 
 ## License
 
