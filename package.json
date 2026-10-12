@@ -1,7 +1,7 @@
 {
     "name":  "dsh-message-revert",
     "description":  "DSH message revert/rollback plugin: a revert button on every sent message; on confirm it restores the message text and attachments to the composer, rolls the session back (fork at the last completed turn, or a fresh blank session for a first message) and restores workspace files to their captured before-content. Host engine + browser UI, no core changes.",
-    "version":  "1.0.5",
+    "version":  "1.1.0",
     "publishConfig":  {
                           "access":  "public"
                       },
@@ -32,7 +32,8 @@
                                               "@deepseek-ai/dsh-client-locale",
                                               "@deepseek-ai/dsh-client-ui-conversation",
                                               "@deepseek-ai/dsh-client-ui-slots",
-                                              "@deepseek-ai/dsh-client-ui-workspace"
+                                              "@deepseek-ai/dsh-client-ui-workspace",
+                                              "@deepseek-ai/dsh-client-ui-settings-general"
                                           ],
                                "platform":  "web"
                            }

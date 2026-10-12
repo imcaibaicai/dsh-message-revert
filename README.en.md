@@ -9,11 +9,13 @@ A message revert/rollback plugin for DeepSeek Harness: **a revert button appears
 | Feature | Notes |
 |---|---|
 | Revert button | Appears on hover in every user message row's action bar (with a fallback hover bar while the first turn is still running) |
-| Confirm dialog | Lists the files changed before that step (`＋` created / `●` modified); says so plainly when none are detected |
+| Multi-mode modal | Choose between **Step Undo** (revert only the latest step), **Safe Fork** (fork child session, preserve original), and **Full Reset** (clean slate) with dynamic file previews |
+| General Settings | Fully integrated with Settings → General, supporting configurable default rollback mode, auto-archive protection, and smart modal toggle |
+| Session protection | Auto-archiving is disabled by default (`autoArchive: false`) so original conversations are permanently preserved in the sidebar |
 | Text restore | The message text returns to the composer (official `conversation.input.shell` `setDraft` first, Lexical DOM injection as fallback) |
 | Attachment restore | Image/file attachments are re-created as drafts and re-attached (official `createDrafts` + `addAttachments` + `rebindDraftFiles`) |
-| Session rollback | Non-first message: fork at the **last completed turn strictly before the message**; first message: a fresh blank session bound to the original workspace (model / mode / permission profile all inherited) |
-| File restore | The host captures the full content of every `write`/`edit` target **before the tool executes**; on revert, files are restored in order (created ones deleted, modified ones restored) |
+| Session rollback | Fine-grained step cut or turn boundary fork; never silently erases a session even if multiple steps ran on the first turn |
+| File restore | The host captures the full content of every `write`/`edit` target **before the tool executes**; on revert, files are restored accurately per cut point |
 | Workspace inheritance | The new session is bound to the original workspace, so the composer is editable and model/mode/permissions survive |
 | Diagnostics channel | On failure, the observed snapshot shape is appended to `~/.dsh/dsh-revert/diag.log` and shown in the dialog, so issues can be located after the fact |
 
@@ -55,32 +57,6 @@ Remove the insert row from `cordis.patch.yml` plus the package directory, then r
 - Before-snapshots only exist for `write`/`edit` calls made while the plugin was installed; earlier changes cannot be reverted (the dialog will say "no file changes detected before this step").
 - Relies on official internal DOM markers (`[data-chat-flow-kind=user]`, `[data-chat-flow-key]`, `[data-composer-input]`) and service faces (`sessions.fork` / `conversation.input.shell` / `workspaces.archiveSession`); after a DSH upgrade, check these contracts first if something breaks.
 - Tested on DeepSeek Harness `0.1.5-rc.1` (web profile); `sessions.create({ workspaceId })` is the correct way to birth a blank session on 0.1.5, and newer-build verbs (`connectWorkspace` / `startSession`) are preferred when present.
-
-## Changelog
-
-### 1.0.5 (2026-10-10)
-
-- **Comprehensively resolved "right sidebar (files tree, terminal, preview) collapsing upon rollback"**:
-  - **Accurate detection and forced expansion flag**: Detects whether the right sidebar is currently open using `button[data-sidebar-right-expand]` (which is strictly rendered only when rightbar is collapsed) and DOM width; forces `layout.expanded = true` when migrating layout to the new session so React `RightbarSeat` does not un-expand the panel on mount.
-  - **DOM-level watcher guard loop**: If unmounting cleanup calls `layout.closeRightbar()`, an active watcher loop (15 attempts across ~1s) immediately simulates clicking the expand button and attempts reflection calls on `sidebarRight`, guaranteeing the right sidebar stays consistently open.
-  - **Left sidebar equal protection**: Guarding left sidebar against accidental collapse under any viewport width.
-
-### 1.0.4 (2026-10-10)
-
-- **Fixed "sidebar automatically closes upon rollback"**: ensure rollback operations strictly revert conversation and workspace files without altering the UI layout:
-  - **Seamless inheritance of right sidebar (files/terminal/preview tabs) state**: DSH isolates right sidebar docking layout per session in `localStorage`. Rollback creating a new session caused the right sidebar to start empty and collapsed. The layout, open tabs, active pane, and expanded state are now deep-cloned to the target session upon fork/reset.
-  - **Left sidebar expansion preservation**: captures the open/collapsed state of the left sidebar before rollback, restoring it if session transition or narrow-screen responsiveness collapsed it.
-
-### 1.0.3 (2026-10-06)
-
-- **Fixed "cannot revert a follow-up message inside a turn" / "reverting silently drops a whole turn"**: topology-aware cut selection (turn-opening cuts at previous turn end; mid-turn steering cuts at previous step end).
-- **Fixed archive block & cache bypass**: ensures all earlier messages are preserved in child log reads.
-- **Safer execution ordering**: stop turn before file restoration to avoid I/O races.
-
-### 1.0.2 (2026-10-02)
-
-- Restores image and file attachments to the composer via `/dsh-revert/attachment`.
-- Declares DSH 0.2.0 compatibility.
 
 ## License
 
