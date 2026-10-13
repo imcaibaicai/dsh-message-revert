@@ -12,6 +12,7 @@ A message revert/rollback plugin for DeepSeek Harness: **a revert button appears
 | Multi-mode modal | Choose between **Step Undo** (revert only the latest step), **Safe Fork** (fork child session, preserve original), and **Full Reset** (clean slate) with dynamic file previews |
 | General Settings | Fully integrated with Settings → General, supporting configurable default rollback mode, auto-archive protection, and smart modal toggle |
 | Session protection | Auto-archiving is disabled by default (`autoArchive: false`) so original conversations are permanently preserved in the sidebar |
+| Sidebar state continuity | Preserves both the left conversation sidebar and the right docked tools (files/terminal) expansion across rollback |
 | Text restore | The message text returns to the composer (official `conversation.input.shell` `setDraft` first, Lexical DOM injection as fallback) |
 | Attachment restore | Image/file attachments are re-created as drafts and re-attached (official `createDrafts` + `addAttachments` + `rebindDraftFiles`) |
 | Session rollback | Fine-grained step cut or turn boundary fork; never silently erases a session even if multiple steps ran on the first turn |
